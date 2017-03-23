@@ -1,4 +1,3 @@
-var port = process.env.PORT || 8000;
 
 var webrtc = require('wrtc');
 var appInsights = require("applicationinsights");
