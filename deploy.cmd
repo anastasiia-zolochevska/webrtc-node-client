@@ -101,6 +101,7 @@ call :SelectNodeVersion
 IF EXIST "%DEPLOYMENT_TARGET%\package.json" (
   pushd "%DEPLOYMENT_TARGET%"
   SET NODE_EXE=".\node64\node"
+  SET NPM_CMD="!NODE_EXE!" "!NPM_JS_PATH!"
   call :ExecuteCmd !NPM_CMD! install --production
   IF !ERRORLEVEL! NEQ 0 goto error
   popd
