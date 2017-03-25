@@ -49,12 +49,11 @@ function handleError(error) {
   throw error;
 }
 
-function log(message) {
-  console.log(message);
-  appInsightsClient.trackTrace(message);
+function log(message, data) {
+  if (!data) { data = '' }
+  console.log(message, data);
+  appInsightsClient.trackTrace(message + data);
 }
-
-
 
 function createOffer() {
   log('Client: create offer');
@@ -74,6 +73,9 @@ function setRemoteDescription(desc) {
   log('Client: set remote description', desc);
   peerConnection.setRemoteDescription(new RTCSessionDescription(desc));
 }
+function sendMessageThroughDataChannel() {
+  dataChannel.send(JSON.stringify({ "sentTs": Date.now() }));
+}
 
 function startTest(params) {
   room = params;
@@ -84,26 +86,44 @@ function startTest(params) {
   peerConnection = new RTCPeerConnection(pcConfig);
   peerConnection.onicecandidate = onIceCandidate;
 
+  var dataChannel = peerConnection.createDataChannel(room);
 
-  var dataChannel = peerConnection.createDataChannel('test');
-
-  dataChannel.onmessage = function (event) {
-    console.log("Client received message", event.data);
-    var data = JSON.parse(event.data);
-    data = Object.assign({ receivedTs: Date.now() }, data);
-    dataChannel.send(JSON.stringify(data));
+  dataChannel.onopen = function () {
+    dataChannel.send(JSON.stringify({ "sentTs": Date.now() }));
   }
 
   createOffer();
 
+  var checks = 0;
+  var expected = 5;
+  var rttSum = 0;
+
+  return new Promise(function (resolve, reject) {
+    dataChannel.onmessage = function (event) {
+
+      log("client received ", event.data)
+
+      var data = JSON.parse(event.data);
+      if (data.receivedTs) {
+        rttSum += Date.now() - data.sentTs;
+      }
+
+      if (++checks >= expected) {
+        dataChannel.send("close");
+        done();
+        resolve(rttSum / expected);
+      } else {
+        dataChannel.send(JSON.stringify({ "sentTs": Date.now() }));
+      }
+    };
+
+  });
 }
 
 function done() {
   peerConnection.close();
   socket.emit('bye', room);
 }
-
-
 
 module.exports = {
   startTest: startTest
