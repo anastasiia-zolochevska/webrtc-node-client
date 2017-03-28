@@ -79,7 +79,7 @@ function sendMessageThroughDataChannel() {
 
 function startTest(params) {
   room = params;
-  socket = socketClient('http://3dstreamingsignalingserver.azurewebsites.net:80');
+  socket = socketClient('http://3dstreamingsignaling.azurewebsites.net:80');
   socket.emit('join', room);
   socket.on('message', onSocketReceivedMessage);
 
