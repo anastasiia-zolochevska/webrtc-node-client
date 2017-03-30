@@ -52,6 +52,7 @@ function onIceCandidate(event) {
       type: 'candidate',
       candidate: event.candidate
     });
+    log('candidate', event.candidate.candidate);
   }
 }
 
