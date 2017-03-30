@@ -44,10 +44,15 @@ function sendMessage(message) {
 function onIceCandidate(event) {
   if (!event.candidate) return;
   log('onicecandidate');
-  sendMessage({
-    type: 'candidate',
-    candidate: event.candidate
-  });
+  if (event.candidate.candidate.indexOf("typ relay ") == -1) {
+    log('dropping ice candidate', event.candidate);
+  }
+  else {
+    sendMessage({
+      type: 'candidate',
+      candidate: event.candidate
+    });
+  }
 }
 
 function handleError(error) {
